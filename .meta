@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "finn-stilling-inngang": "git@github.com:navikt/finn-stilling-inngang.git",
+    "foresporsel-om-deling-av-cv-api": "git@github.com:navikt/foresporsel-om-deling-av-cv-api.git",
+    "presenterte-kandidater": "git@github.com:navikt/presenterte-kandidater.git",
+    "presenterte-kandidater-api": "git@github.com:navikt/presenterte-kandidater-api.git",
+    "rekrutteringsbistand-bruker-api": "git@github.com:navikt/rekrutteringsbistand-bruker-api.git",
+    "rekrutteringsbistand-frontend": "git@github.com:navikt/rekrutteringsbistand-frontend.git",
+    "rekrutteringsbistand-kandidat-api": "git@github.com:navikt/rekrutteringsbistand-kandidat-api.git",
+    "rekrutteringsbistand-kandidatsok-api": "git@github.com:navikt/rekrutteringsbistand-kandidatsok-api.git",
+    "rekrutteringsbistand-kandidatvarsel-api": "git@github.com:navikt/rekrutteringsbistand-kandidatvarsel-api.git",
+    "rekrutteringsbistand-statistikk-api": "git@github.com:navikt/rekrutteringsbistand-statistikk-api.git",
+    "rekrutteringsbistand-stilling-api": "git@github.com:navikt/rekrutteringsbistand-stilling-api.git",
+    "rekrutteringsbistand-stilling-kafkabro": "git@github.com:navikt/rekrutteringsbistand-stilling-kafkabro.git",
+    "rekrutteringsbistand-stillingssok-proxy": "git@github.com:navikt/rekrutteringsbistand-stillingssok-proxy.git",
+    "rekrutteringstreff-backend": "git@github.com:navikt/rekrutteringstreff-backend.git",
+    "rekrutteringstreff-bruker": "git@github.com:navikt/rekrutteringstreff-bruker.git",
+    "toi-kafkamanager": "git@github.com:navikt/toi-kafkamanager.git",
+    "toi-rapids-and-rivers": "git@github.com:navikt/toi-rapids-and-rivers.git",
+    "vis-stilling": "git@github.com:navikt/vis-stilling.git"
+  }
+}
