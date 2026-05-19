@@ -21,112 +21,111 @@ Oversikt over all asynkron kommunikasjon via Kafka for backend-appene, **eksklud
 ## Mermaid-diagram
 
 ```mermaid
-graph TB
-    %% === Interne apper ===
-    kandidat-api[rekrutteringsbistand-kandidat-api]
-    stilling-api[rekrutteringsbistand-stilling-api]
-    foresporsel-api[foresporsel-om-deling-av-cv-api]
-    presenterte-api[presenterte-kandidater-api]
-    kandidatvarsel-api[rekrutteringsbistand-kandidatvarsel-api]
-    statistikk-api[rekrutteringsbistand-statistikk-api]
-    stilling-kafkabro[rekrutteringsbistand-stilling-kafkabro]
-    rektreff-api[rekrutteringstreff-api]
-    aktivitetskort-app[rekrutteringsbistand-aktivitetskort]
+graph LR
+    subgraph Produsenter
+        direction TB
+        kandidat-api[rekrutteringsbistand-kandidat-api]
+        stilling-api[rekrutteringsbistand-stilling-api]
+        foresporsel-api[foresporsel-om-deling-av-cv-api]
+        presenterte-api[presenterte-kandidater-api]
+        kandidatvarsel-api[rekrutteringsbistand-kandidatvarsel-api]
+        statistikk-api[rekrutteringsbistand-statistikk-api]
+        stilling-kafkabro[rekrutteringsbistand-stilling-kafkabro]
+        rektreff-api[rekrutteringstreff-api]
+        aktivitetskort-app[rekrutteringsbistand-aktivitetskort]
+    end
 
-    %% === Topics ===
-    rapid([toi.rapid-1])
-    stilling-topic([toi.rekrutteringsbistand-stilling-1])
-    kandidatutfall-topic([toi.kandidatutfall])
-    stilling-ekstern([teampam.stilling-ekstern-1])
-    foresporsel-topic([pto.deling-av-stilling-fra-nav-forespurt-v2])
-    svar-topic([pto.stilling-fra-nav-oppdatert-v2])
-    statusoppdatering-topic([pto.rekrutteringsbistand-statusoppdatering-v1])
-    minside-bestilling([min-side.aapen-brukervarsel-v1])
-    minside-hendelse([min-side.aapen-varsel-hendelse-v1])
-    dab-aktivitetskort([dab.aktivitetskort-v1.1])
-    dab-feil([dab.aktivitetskort-feil-v1])
+    subgraph Topics
+        direction TB
+        rapid([toi.rapid-1])
+        stilling-topic([toi.rekrutteringsbistand-stilling-1])
+        kandidatutfall-topic([toi.kandidatutfall])
+        stilling-ekstern([teampam.stilling-ekstern-1])
+        foresporsel-topic([pto.deling-av-stilling-fra-nav-forespurt-v2])
+        svar-topic([pto.stilling-fra-nav-oppdatert-v2])
+        statusoppdatering-topic([pto.rekrutteringsbistand-statusoppdatering-v1])
+        minside-bestilling([min-side.aapen-brukervarsel-v1])
+        minside-hendelse([min-side.aapen-varsel-hendelse-v1])
+        dab-aktivitetskort([dab.aktivitetskort-v1.1])
+        dab-feil([dab.aktivitetskort-feil-v1])
+    end
 
-    %% === Eksterne konsumenter ===
-    veilarbaktivitet[veilarbaktivitet<br>team-dab]
-    datavarehus[Datavarehus<br>teamoppfolging/team-dialog]
-    minside[MinSide<br>tms]
-    pam-ad[pam-ad-api<br>teampam]
-    dab[DAB aktivitetsplan<br>team-dab]
+    subgraph Eksterne
+        direction TB
+        veilarbaktivitet[veilarbaktivitet<br>team-dab]
+        datavarehus[Datavarehus<br>teamoppfolging]
+        minside[MinSide<br>tms]
+        pam-ad[pam-ad-api<br>teampam]
+        dab[DAB aktivitetsplan<br>team-dab]
+    end
 
     %% =====================================================
-    %% rekrutteringsbistand-kandidat-api
+    %% rekrutteringsbistand-kandidat-api → rapid
     %% =====================================================
-    kandidat-api -->|"WRITE: kandidat_v2.*<br>(OpprettetKandidatliste, OppdaterteKandidatliste,<br>DelCvMedArbeidsgiver, RegistrertDeltCv,<br>RegistrertFåttJobben, FjernetRegistreringDeltCv,<br>FjernetRegistreringFåttJobben, LukketKandidatliste,<br>SlettetStillingOgKandidatliste,<br>SlettFraArbeidsgiversKandidatliste)"| rapid
+    kandidat-api -->|"kandidat_v2.*"| rapid
 
     %% =====================================================
     %% rekrutteringsbistand-stilling-api
     %% =====================================================
-    stilling-api -->|"WRITE: indekserDirektemeldtStilling,<br>reindekserDirektemeldtStilling,<br>indekserStillingsinfo,<br>publiserEllerAvpubliserTilArbeidsplassen"| rapid
-    stilling-api -.->|"READ: meldinger uten<br>stilling/stillingsinfo<br>(beriker med stillingdata)"| rapid
-    stilling-api -.->|"READ: rekrutteringsbistand-stilling-1"| stilling-topic
+    stilling-api -->|"indekserStilling*,<br>publiserTilArbeidsplassen"| rapid
+    rapid -.->|"beriker meldinger<br>med stillingdata"| stilling-api
+    stilling-topic -.->|"stillingsdata"| stilling-api
 
     %% =====================================================
     %% rekrutteringsbistand-stilling-kafkabro (Aivia)
     %% =====================================================
-    stilling-kafkabro -.->|"READ: teampam.stilling-ekstern-1"| stilling-ekstern
-    stilling-kafkabro -->|"WRITE: kopierer stillinger"| stilling-topic
-    pam-ad -->|"WRITE: publiserer stillinger"| stilling-ekstern
+    pam-ad -->|"publiserer stillinger"| stilling-ekstern
+    stilling-ekstern -.->|"kilde"| stilling-kafkabro
+    stilling-kafkabro -->|"kopierer"| stilling-topic
 
     %% =====================================================
     %% foresporsel-om-deling-av-cv-api
     %% =====================================================
-    foresporsel-api -.->|"READ: kandidat_v2.DelCvMedArbeidsgiver<br>kandidat_v2.LukketKandidatliste<br>kandidat_v2.RegistrertFåttJobben"| rapid
-    foresporsel-api -->|"WRITE: statusoppdatering<br>(CV_DELT, FATT_JOBBEN, IKKE_FATT_JOBBEN)"| statusoppdatering-topic
-    foresporsel-api -->|"WRITE: ForesporselOmDelingAvCv (Avro)"| foresporsel-topic
-    foresporsel-api -.->|"READ: DelingAvCvRespons (Avro)"| svar-topic
-    veilarbaktivitet -.->|"READ: forespørsel"| foresporsel-topic
-    veilarbaktivitet -->|"WRITE: svar"| svar-topic
-    veilarbaktivitet -.->|"READ: statusoppdatering"| statusoppdatering-topic
+    rapid -.->|"kandidat_v2.DelCvMedArbeidsgiver<br>kandidat_v2.LukketKandidatliste<br>kandidat_v2.RegistrertFåttJobben"| foresporsel-api
+    foresporsel-api -->|"ForesporselOmDelingAvCv"| foresporsel-topic
+    foresporsel-api -->|"CV_DELT / FATT_JOBBEN /<br>IKKE_FATT_JOBBEN"| statusoppdatering-topic
+    svar-topic -.->|"DelingAvCvRespons"| foresporsel-api
+    foresporsel-topic -.->|"forespørsel"| veilarbaktivitet
+    veilarbaktivitet -->|"svar"| svar-topic
+    statusoppdatering-topic -.->|"statusoppdatering"| veilarbaktivitet
 
     %% =====================================================
     %% presenterte-kandidater-api
     %% =====================================================
-    presenterte-api -.->|"READ: kandidat_v2.DelCvMedArbeidsgiver<br>kandidat_v2.OpprettetKandidatliste<br>kandidat_v2.LukketKandidatliste<br>kandidat_v2.SlettetStillingOgKandidatliste<br>kandidat_v2.SlettFraArbeidsgiversKandidatliste"| rapid
-    presenterte-api -->|"WRITE: notifikasjon.cv-delt"| rapid
-    presenterte-api -->|"WRITE: arbeidsgiversKandidatliste.VisningKontaktinfo"| rapid
+    rapid -.->|"kandidat_v2.DelCvMedArbeidsgiver<br>kandidat_v2.OpprettetKandidatliste<br>kandidat_v2.LukketKandidatliste<br>kandidat_v2.SlettetStillingOgKandidatliste<br>kandidat_v2.SlettFraArbeidsgiversKandidatliste"| presenterte-api
+    presenterte-api -->|"notifikasjon.cv-delt<br>VisningKontaktinfo"| rapid
 
     %% =====================================================
     %% rekrutteringsbistand-kandidatvarsel-api
     %% =====================================================
-    kandidatvarsel-api -.->|"READ: rekrutteringstreffinvitasjon<br>rekrutteringstreffoppdatering<br>rekrutteringstreffSvarOgStatus (avlyst)"| rapid
-    kandidatvarsel-api -->|"WRITE: varselbeskjed"| minside-bestilling
-    kandidatvarsel-api -.->|"READ: varseloppdateringer"| minside-hendelse
-    kandidatvarsel-api -->|"WRITE: minsideVarselSvar"| rapid
-    minside -.->|"READ: bestilling"| minside-bestilling
-    minside -->|"WRITE: hendelser/status"| minside-hendelse
+    rapid -.->|"rekrutteringstreffinvitasjon<br>rekrutteringstreffoppdatering<br>rekrutteringstreffSvarOgStatus"| kandidatvarsel-api
+    kandidatvarsel-api -->|"varselbeskjed"| minside-bestilling
+    minside-hendelse -.->|"varseloppdateringer"| kandidatvarsel-api
+    kandidatvarsel-api -->|"minsideVarselSvar"| rapid
+    minside-bestilling -.->|"bestilling"| minside
+    minside -->|"hendelser/status"| minside-hendelse
 
     %% =====================================================
     %% rekrutteringsbistand-statistikk-api
     %% =====================================================
-    statistikk-api -.->|"READ: kandidat_v2.OpprettetKandidatliste<br>kandidat_v2.OppdaterteKandidatliste<br>kandidat_v2.DelCvMedArbeidsgiver<br>kandidat_v2.RegistrertDeltCv<br>kandidat_v2.RegistrertFåttJobben<br>kandidat_v2.FjernetRegistreringDeltCv<br>kandidat_v2.FjernetRegistreringFåttJobben<br>kandidat_v2.SlettetStillingOgKandidatliste<br>arbeidsgiversKandidatliste.VisningKontaktinfo"| rapid
-    statistikk-api -->|"WRITE: kandidatutfall (Avro)"| kandidatutfall-topic
-    datavarehus -.->|"READ: kandidatutfall"| kandidatutfall-topic
+    rapid -.->|"kandidat_v2.*<br>VisningKontaktinfo"| statistikk-api
+    statistikk-api -->|"kandidatutfall (Avro)"| kandidatutfall-topic
+    kandidatutfall-topic -.->|"konsumerer"| datavarehus
 
     %% =====================================================
     %% rekrutteringstreff-api
     %% =====================================================
-    rektreff-api -->|"WRITE: rekrutteringstreffinvitasjon"| rapid
-    rektreff-api -->|"WRITE: rekrutteringstreffoppdatering"| rapid
-    rektreff-api -->|"WRITE: rekrutteringstreffSvarOgStatus"| rapid
-    rektreff-api -->|"WRITE: behov synlighetRekrutteringstreff"| rapid
-    rektreff-api -.->|"READ: synlighet.erSynlig (fra toi-synlighetsmotor)"| rapid
-    rektreff-api -.->|"READ: synlighetRekrutteringstreff (need-svar)"| rapid
-    rektreff-api -.->|"READ: aktivitetskort-feil"| rapid
-    rektreff-api -.->|"READ: minsideVarselSvar"| rapid
+    rektreff-api -->|"rekrutteringstreffinvitasjon<br>rekrutteringstreffoppdatering<br>rekrutteringstreffSvarOgStatus<br>behov synlighet"| rapid
+    rapid -.->|"synlighet.erSynlig<br>synlighetRekrutteringstreff<br>aktivitetskort-feil<br>minsideVarselSvar"| rektreff-api
 
     %% =====================================================
     %% rekrutteringsbistand-aktivitetskort
     %% =====================================================
-    aktivitetskort-app -.->|"READ: rekrutteringstreffinvitasjon<br>rekrutteringstreffSvarOgStatus<br>rekrutteringstreffoppdatering"| rapid
-    aktivitetskort-app -->|"WRITE: aktivitetskort (JSON)"| dab-aktivitetskort
-    aktivitetskort-app -.->|"READ: feilmeldinger"| dab-feil
-    dab -.->|"READ: aktivitetskort"| dab-aktivitetskort
-    dab -->|"WRITE: feilmeldinger"| dab-feil
+    rapid -.->|"rekrutteringstreffinvitasjon<br>rekrutteringstreffSvarOgStatus<br>rekrutteringstreffoppdatering"| aktivitetskort-app
+    aktivitetskort-app -->|"aktivitetskort (JSON)"| dab-aktivitetskort
+    dab-feil -.->|"feilmeldinger"| aktivitetskort-app
+    dab-aktivitetskort -.->|"aktivitetskort"| dab
+    dab -->|"feilmeldinger"| dab-feil
 
     %% === Styling ===
     classDef app fill:#5bb55b,stroke:#3a7a3a,color:#fff
