@@ -7,7 +7,7 @@ Oversikt over all asynkron kommunikasjon via Kafka for backend-appene, **eksklud
 | Topic | Pool | Beskrivelse |
 |-------|------|-------------|
 | `toi.rapid-1` | nav-prod | Rapids & Rivers topic — intern event-buss for teamet |
-| `toi.rekrutteringsbistand-stilling-1` | nav-prod | Kompaktert stilling-topic (kopiert fra pam) |
+| `pam.stilling-ekstern-1` | nav-prod | Stilling-topic  |
 | `toi.kandidatutfall` | nav-prod | Kandidatutfall til Datavarehus (Avro) |
 | `teampam.stilling-ekstern-1` | nav-prod | Ekstern stilling-topic fra teampam (kilde) |
 | `pto.deling-av-stilling-fra-nav-forespurt-v2` | nav-prod | Forespørsel om deling av CV til aktivitetsplanen |
@@ -56,7 +56,7 @@ graph TB
     end
 
     rapid([toi.rapid-1])
-    stilling-topic([toi.rekrutteringsbistand-stilling-1])
+    stilling-topic([pam.stilling-ekstern-1])
 
     stilling-api -->|"WRITE: indekserDirektemeldtStilling"| rapid
     stilling-api -->|"WRITE: reindekserDirektemeldtStilling"| rapid
@@ -69,30 +69,6 @@ graph TB
     classDef topic fill:#4a90d9,stroke:#2c5f8a,color:#fff
     class stilling-api app
     class rapid,stilling-topic topic
-```
-
-### rekrutteringsbistand-stilling-kafkabro
-
-```mermaid
-graph TB
-    subgraph rekrutteringsbistand-stilling-kafkabro
-        stilling-kafkabro[rekrutteringsbistand-stilling-kafkabro<br>Aivia]
-    end
-
-    stilling-ekstern([teampam.stilling-ekstern-1])
-    stilling-topic([toi.rekrutteringsbistand-stilling-1])
-    pam-ad[pam-ad-api<br>teampam]
-
-    pam-ad -->|"WRITE: publiserer stillinger"| stilling-ekstern
-    stilling-ekstern -.->|"READ: kilde-stillinger"| stilling-kafkabro
-    stilling-kafkabro -->|"WRITE: kopierer stillinger"| stilling-topic
-
-    classDef app fill:#5bb55b,stroke:#3a7a3a,color:#fff
-    classDef topic fill:#4a90d9,stroke:#2c5f8a,color:#fff
-    classDef external fill:#f5a623,stroke:#c17d0e,color:#fff
-    class stilling-kafkabro app
-    class stilling-ekstern,stilling-topic topic
-    class pam-ad external
 ```
 
 ### foresporsel-om-deling-av-cv-api
@@ -315,19 +291,9 @@ Piler:
 
 Lytter på alle meldinger med `stillingsId` som mangler `stilling`/`stillingsinfo`/`direktemeldtStilling`. Beriker meldingen med stillings- og stillingsinfo-data og re-publiserer.
 
-**Leser fra `toi.rekrutteringsbistand-stilling-1`:**
+**Leser fra `pam.stilling-ekstern-1`:**
 
 Mottar kompakterte stillingsmeldinger fra kafkabro.
-
----
-
-### rekrutteringsbistand-stilling-kafkabro
-
-Bruker [Aivia](https://github.com/nais/aivia) for å kopiere meldinger mellom topics:
-
-| Fra | Til | Beskrivelse |
-|-----|-----|-------------|
-| `teampam.stilling-ekstern-1` | `toi.rekrutteringsbistand-stilling-1` | Speiler eksterne stillinger til intern topic |
 
 ---
 

@@ -161,7 +161,7 @@ graph TB
 
     %% Topics
     rapid([toi.rapid-1])
-    stilling-topic([toi.rekrutteringsbistand-stilling-1])
+    stilling-topic([pam.stilling-ekstern-1])
 
     %% Synkrone utgående
     stilling-api -->|"SYNC: GET /b2b/api/v1/ads/{id}"| pam-ad-api
@@ -525,36 +525,6 @@ graph TB
     class statistikk backend
     class datavarehus external
     class rapid,kandidatutfall topic
-```
-
----
-
-## rekrutteringsbistand-stilling-kafkabro
-
-```mermaid
-graph TB
-    subgraph rekrutteringsbistand-stilling-kafkabro
-        kafkabro[rekrutteringsbistand-stilling-kafkabro<br>Aivia]
-    end
-
-    %% Topics
-    stilling-ekstern([teampam.stilling-ekstern-1])
-    stilling-topic([toi.rekrutteringsbistand-stilling-1])
-
-    %% Eksterne
-    pam-ad[pam-ad-api<br>teampam]
-
-    %% Asynkrone
-    pam-ad -.->|"ASYNC: publiserer stillinger"| stilling-ekstern
-    stilling-ekstern -.->|"ASYNC READ: kilde-stillinger"| kafkabro
-    kafkabro -.->|"ASYNC WRITE: kopierer stillinger"| stilling-topic
-
-    classDef backend fill:#5bb55b,stroke:#3a7a3a,color:#fff
-    classDef external fill:#f5a623,stroke:#c17d0e,color:#fff
-    classDef topic fill:#9b59b6,stroke:#6c3483,color:#fff
-    class kafkabro backend
-    class pam-ad external
-    class stilling-ekstern,stilling-topic topic
 ```
 
 ---
